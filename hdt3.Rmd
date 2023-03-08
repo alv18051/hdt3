@@ -1,0 +1,95 @@
+---
+title: "hdt3"
+author: "Elean Rivas, Javier Alvarez"
+date: "2023-03-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ModelMetrics)
+library(tidyverse)
+library(corrplot)
+library(nortest)
+library(caret)
+library(hopkins)
+```
+
+```{r}
+casas <- read.csv("C:\\Users\\javie\\Desktop\\U\\2023f\\mineria\\hdt3\\train.csv")
+```
+
+##Analisis Exploratorio.
+
+```{r}
+summary(casas)
+str(casas)
+table(unlist(lapply(casas, class)))
+```
+Como podemos observar tenemos (luego de quitar el id) 43 variables de tipo char, y 37 variables de tipo int, siendo algunas de estas seran más utiles para nuestro trabajo, y las cuales vale 
+más la pena que sean estudiadas a profuncidad. 
+
+```{r grfBldngCss}
+barplot(casas$LotArea, xlab= "Lote", ylab = "M^2", main="Lote en M^2")
+```
+
+Podemos observar que la mayoria de casas se encuentra en o debajo de los 50,000 M^2, siendo la casa con mayor tamaño una casa con una extencion de de 2000,000M^2 
+
+```{r }
+plot(x = casas$LotArea, y= casas$SalePrice, xlab= "Tamaño", ylab= "Precio de venta", main = "Correlación entre tamaño y precio")
+abline(lm(casas$SalePrice ~ casas$LotArea), col = "blue")
+```
+Podemos observar que no existe una corelacion entre tamaño del lote y precio de venta de la casa, ya que las casas con tamaños similares de lotes cambian de precio y hay casas más costosas con tamaños de lotes más pequeños. 
+
+```{r }
+library(ggplot2)
+df <- as.data.frame(casas$HouseStyle)
+tipo <-casas$HouseStyle
+mostrar <- (ggplot(data=df, aes(x=tipo)) + geom_bar(stat="count", width=0.7, fill = "cyan")+theme_minimal())
+print(mostrar + ggtitle("Tipo de vivienda"))
+```
+Con este grafico podemos observar que el tipo de vivienda más comun es de 1 nivel
+
+```{r }
+
+
+plot(x = casas$YearBuilt, y= casas$SalePrice, xlab= "Año de construccion", ylab= "Precio de venta", main = "Correlación entre precio de la casa y su año de construccion")
+abline(lm(casas$SalePrice ~ casas$YearBuilt), col = "blue")
+```
+Con estos graficos podemos observar que existe una relacion entre el precio al que se venden las casas con respecto al año al que fueron construidas. 
+
+```{r }
+library(ggplot2)
+df <- as.data.frame(casas$X1stFlrSF)
+metros_cuadrados_primer_piso <- casas$X1stFlrSF
+mostrar <- ggplot(data=df, aes(x=metros_cuadrados_primer_piso)) + geom_bar(stat="count", width=0.7, fill = "cyan")+theme_minimal()
+print(mostrar + ggtitle("Metros cuadrados del primer piso"))
+plot(x = casas$X1stFlrSF, y= casas$SalePrice, xlab= "Total de mestros cuadrados del primer piso", ylab= "Precio de venta", main = "Correlación entre precio de venta y total de metros cuadrados \n del primer piso")
+abline(lm(casas$SalePrice ~ casas$X1stFlrSF), col = "blue")
+```
+
+Podemos observar que existe una relación entre el precio de venta y el tamaño en M^2 del primer piso de la casa. 
+
+```{r }
+library(ggplot2)
+df <- as.data.frame(casas$X2ndFlrSF)
+metros_cuadrados_segundo_piso <- casas$X2ndFlrSF
+mostrar <- ggplot(data=df, aes(x=metros_cuadrados_segundo_piso)) + geom_bar(stat="count", width=0.7, fill = "cyan")+theme_minimal()
+print(mostrar + ggtitle("Metros cuadrados segundo piso"))
+plot(x = casas$X2ndFlrSF, y= casas$SalePrice, xlab= "Total de mestros cuadrados del segundo piso", ylab= "Precio de venta", main = "Correlación entre precio de venta y total de metros cuadrados \n del segundo piso")
+abline(lm(casas$SalePrice ~ casas$X2ndFlrSF), col = "blue")
+```
+Como podemos observar, tambien existe una relacion entre el tamaño en M^2 del segundo nivel de una casa y su precio. 
+
+```{r }
+casas_num <- sapply(casas, is.numeric)
+casas_num <- select_if(casas, is.numeric)
+casas_num <- casas_num[complete.cases(casas_num),]
+casas_num <- scale(na.omit(casas_num))
+set.seed(123)
+hopkins(casas_num)
+dist_casas <- dist(casas_num)
+
+```
+
+Como podemos observar, el analisis de Hopkins del set produjo un resultado de 1, lo cual quiere decir que, al estar alejado de 0.5, es un set de datos al que si le puede realizar el agrupamiento. 
